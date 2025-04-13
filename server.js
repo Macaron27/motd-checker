@@ -7,10 +7,10 @@ const port = 3000;
 
 // MySQL connection setup
 const db = mysql.createConnection({
-    host: "78.46.164.171", // Your MySQL host
-    user: "db_423596", // Your MySQL username
-    password: "hggYz4Nhbwd5rR0rsGLy", // Your MySQL password
-    database: "db_423596" // Database where BungeeServerManager stores server data
+    host: "DBHOST", // Your MySQL host
+    user: "DBUSER", // Your MySQL username
+    password: "DBPASSWORD", // Your MySQL password
+    database: "DBNAME" // Database where BungeeServerManager stores server data
 });
 
 db.connect((err) => {

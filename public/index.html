@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Server Status</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        body.dark {
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .search-input, .sort-select, .theme-toggle {
+            padding: 8px;
+            font-size: 1rem;
+        }
+        .timestamp {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: gray;
+        }
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            transition: background 0.3s, color 0.3s;
+        }
+        .card.dark {
+            background: #2e2e2e;
+            border: 1px solid #444;
+        }
+        .status {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <input type="text" id="searchBar" placeholder="Search servers..." class="search-input" />
+        <select id="sortSelect" class="sort-select">
+            <option value="name">Sort by Name</option>
+            <option value="status">Sort by Status</option>
+        </select>
+        <button id="themeToggle" class="theme-toggle">Toggle Dark Mode</button>
+    </div>
+
+    <div id="serverContainer"></div>
+
+    <div id="lastUpdated" class="timestamp"></div>
+
+    <script>
+        let servers = [];
+
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/api/status');
+                servers = await res.json();
+                updateUI(servers);
+                document.getElementById("lastUpdated").textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+            } catch (error) {
+                console.error("Failed to fetch server status", error);
+            }
+        }
+
+        function updateUI(serverList) {
+            const container = document.getElementById("serverContainer");
+            container.innerHTML = '';
+            serverList.forEach(server => {
+                const card = document.createElement("div");
+                card.className = "card";
+                if (document.body.classList.contains("dark")) {
+                    card.classList.add("dark");
+                }
+                card.innerHTML = `
+                    <h3>${server.name}</h3>
+                    <p class="status">Status: ${server.status}</p>
+                    <p>MOTD: ${server.motd}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        document.getElementById("searchBar").addEventListener("input", () => {
+            const query = document.getElementById("searchBar").value.toLowerCase();
+            const filtered = servers.filter(server =>
+                server.name.toLowerCase().includes(query) ||
+                server.status.toLowerCase().includes(query)
+            );
+            updateUI(filtered);
+        });
+
+        document.getElementById("sortSelect").addEventListener("change", () => {
+            const sortBy = document.getElementById("sortSelect").value;
+            const sorted = [...servers].sort((a, b) => {
+                if (sortBy === "name") return a.name.localeCompare(b.name);
+                if (sortBy === "status") return a.status.localeCompare(b.status);
+            });
+            updateUI(sorted);
+        });
+
+        document.getElementById("themeToggle").addEventListener("click", () => {
+            document.body.classList.toggle("dark");
+            document.querySelectorAll(".card").forEach(card => card.classList.toggle("dark"));
+        });
+
+        // Refresh every 15 seconds
+        setInterval(fetchStatus, 15000);
+        fetchStatus();
+    </script>
+</body>
+</html>

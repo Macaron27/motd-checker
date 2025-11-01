@@ -27,7 +27,7 @@ async function checkMOTD() {
         db.query("SELECT systemname, ip, port, isactive FROM servermanager_servers", async (err, results) => {
             if (err) {
                 console.error("Error fetching servers from DB:", err);
-                return reject(err); // Reject promise if DB query fails
+                return reject(err);        // Reject promise if DB query fails
             }
 
             const serverStatus = [];
@@ -35,7 +35,7 @@ async function checkMOTD() {
 
             for (const srv of results) {
                 try {
-                    // Increase timeout to 10 seconds
+                    // Timeout of 10 seconds
                     const result = await util.status(srv.ip, srv.port, { timeout: 10000 });
                     const motd = result.motd.clean?.trim().toLowerCase() || '';
 
@@ -56,15 +56,22 @@ async function checkMOTD() {
                     serverStatus.push({
                         name: srv.systemname,
                         status: status,
-                        motd: motd || "No MOTD set"
+                        motd: motd || "No MOTD set",
+                        players: {
+                            online: result.players?.online ?? 0,
+                            max: result.players?.max ?? 0
+                        }
                     });
                 } catch (e) {
                     console.error(`Error checking server ${srv.systemname}:`, e.message);
-                    console.log(motd)
                     serverStatus.push({
                         name: srv.systemname,
                         status: "❌ UNREACHABLE",
-                        motd: "N/A"
+                        motd: "N/A",
+                        players: {
+                            online: 0,
+                            max: 0
+                        }
                     });
 
                     db.query("UPDATE servermanager_servers SET isactive = 0 WHERE systemname = ?", [srv.systemname]);
@@ -73,7 +80,7 @@ async function checkMOTD() {
                 completedRequests++;
 
                 if (completedRequests === results.length) {
-                    resolve(serverStatus); // Resolve the promise once all servers are processed
+                    resolve(serverStatus);     // Resolve the promise once all servers are processed
                 }
             }
         });
@@ -83,8 +90,8 @@ async function checkMOTD() {
 // Automatic refresh every 15 seconds
 setInterval(() => {
     console.log("Refreshing server statuses...");
-    checkMOTD(); // Refresh the server statuses in the backend every 15 seconds
-}, 15000); // 15000 ms = 15 seconds
+    checkMOTD(); // Refresh the server statuses in the backend
+}, 15000);
 
 // API route to get MOTD status
 app.get("/api/status", async (req, res) => {
@@ -104,3 +111,4 @@ app.use(express.static("public"));
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
+

@@ -22,6 +22,7 @@ It use the **BungeeServerManager** plugin to dynamically update the server avail
 ---
 
 🚀 **Getting Started**
+
 1️⃣ **Clone the repository**
 git clone https://github.com/Macaron27/motd-checker.git
 cd motd-checker

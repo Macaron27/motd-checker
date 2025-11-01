@@ -23,7 +23,6 @@ It use the **BungeeServerManager** plugin to dynamically update the server avail
 
 🚀 **Getting Started**
 1️⃣ **Clone the repository**
-```Bash```
 git clone https://github.com/Macaron27/motd-checker.git
 cd motd-checker
 2️⃣ **Install dependencies**
@@ -43,3 +42,4 @@ Watch the console or your notification channel for MOTD updates!
 - Support for multiple notification channels (Discord, Slack, email, etc.)
 - Docker container for easier deployment
 - REST API endpoint to fetch the current Status of all registered servers
+- Using .env for variables

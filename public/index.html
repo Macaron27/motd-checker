@@ -35,16 +35,51 @@
             padding: 15px;
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 15px;
             transition: background 0.3s, color 0.3s;
         }
+        /* Grid layout: 3 cards per row, responsive */
+        #serverContainer {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            #serverContainer { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            #serverContainer { grid-template-columns: 1fr; }
+        }
+    /* spacing is handled by grid gap */
         .card.dark {
             background: #2e2e2e;
             border: 1px solid #444;
         }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .server-name {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .server-players {
+            font-size: 0.95rem;
+            color: #333;
+            font-style: italic;
+            font-weight: normal;
+            flex-shrink: 0;
+        }
+        body.dark .server-players { color: #ddd; }
         .status {
             font-weight: bold;
-            margin-top: 5px;
+            margin-top: 8px;
         }
     </style>
 </head>
@@ -85,8 +120,20 @@
                 if (document.body.classList.contains("dark")) {
                     card.classList.add("dark");
                 }
+                // Determine player text: numeric when ONLINE, "Waiting..." when STARTING/PREPARING
+                const statusStr = (server.status || '').toString().toUpperCase();
+                let playersText = '';
+                if (statusStr.includes('ONLINE')) {
+                    playersText = `${server.players?.online ?? 0}/${server.players?.max ?? 0}`;
+                } else if (statusStr.includes('STARTING') || statusStr.includes('PREPARING')) {
+                    playersText = 'Waiting...';
+                }
+
                 card.innerHTML = `
-                    <h3>${server.name}</h3>
+                    <div class="card-header">
+                        <h3 class="server-name">${server.name}</h3>
+                        ${playersText ? `<div class="server-players">${playersText}</div>` : ''}
+                    </div>
                     <p class="status">Status: ${server.status}</p>
                     <p>MOTD: ${server.motd}</p>
                 `;

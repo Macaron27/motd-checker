@@ -44,3 +44,8 @@ Watch the console or your notification channel for MOTD updates!
 - Docker container for easier deployment
 - REST API endpoint to fetch the current Status of all registered servers
 - Using .env for variables
+
+---
+
+📜 License
+This project is open source and available under the MIT License.

@@ -1,4 +1,5 @@
 🧩 **motd-checker**
+
 **motd-checker** is a lightweight Node.js tool that monitors the **Message of the Day (MOTD)** of your Minecraft servers registered through **BungeeCord**.
 It automatically checks for updates and can trigger notifications or database updates when the MOTD changes.
 It use the **BungeeServerManager** plugin to dynamically update the server availibility to **BungeeCord**.

@@ -17,29 +17,29 @@ It use the **BungeeServerManager** plugin to dynamically update the server avail
 ---
 
 🧠 **Why It’s Useful**
-- Detect MOTD to enable / disbale your servers on your BungeeCord
+- Detect MOTD to enable / disable your servers on your BungeeCord
 - Detect outage on your infrastructure and prevent access to disabled arena (thus prevent user confusion)
 
 ---
 
 🚀 **Getting Started**
 
-1️⃣ **Clone the repository**
+1️⃣ **Clone the repository**:
 git clone https://github.com/Macaron27/motd-checker.git
 cd motd-checker
 
-2️⃣ **Install dependencies**
+2️⃣ **Install dependencies**:
 npm install
 
-3️⃣ **Configure your environment**
+3️⃣ **Configure your environment**:
 Set up **BungeeServerManager** on your BungeeCord network
 Configure your **SQL database** connection in the config file
 Define target servers and the check interval
 
-4️⃣ **Run the checker**
+4️⃣ **Run the checker**:
 node server.js
 
-5️⃣ **Verify functionality**
+5️⃣ **Verify functionality**:
 Watch the console or your notification channel for MOTD updates!
 
 ---

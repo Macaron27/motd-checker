@@ -25,11 +25,15 @@ It use the **BungeeServerManager** plugin to dynamically update the server avail
 🚀 **Getting Started**
 
 1️⃣ **Clone the repository**:
+```bash
 git clone https://github.com/Macaron27/motd-checker.git
+```
 cd motd-checker
 
 2️⃣ **Install dependencies**:
+```bash
 npm install
+```
 
 3️⃣ **Configure your environment**:
 Set up **BungeeServerManager** on your BungeeCord network
@@ -37,7 +41,9 @@ Configure your **SQL database** connection in the config file
 Define target servers and the check interval
 
 4️⃣ **Run the checker**:
+```bash
 node server.js
+```
 
 5️⃣ **Verify functionality**:
 Watch the console or your notification channel for MOTD updates!

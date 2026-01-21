@@ -51,10 +51,9 @@ Watch the console or your notification channel for MOTD updates!
 ---
 
 🧩 **Future Improvements**
-- Support for multiple notification channels (Discord, Slack, email, etc.)
+- Support for multiple notification channels (Slack, email, etc.)
 - Docker container for easier deployment
 - REST API endpoint to fetch the current Status of all registered servers
-- Using .env for variables
 
 ---
 

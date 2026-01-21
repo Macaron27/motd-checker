@@ -3,14 +3,18 @@ const util = require("minecraft-server-util");
 const mysql = require("mysql2");
 
 const app = express();
-const port = 3000;
+
+// Environment variables 
+const port = process.env.PORT;
+const refreshInterval = Number(process.env.REFRESH_INTERVAL);
+const mcTimeout = Number(process.env.MINECRAFT_TIMEOUT);
 
 // MySQL connection setup
 const db = mysql.createConnection({
-    host: "DBHOST", // Your MySQL host
-    user: "DBUSER", // Your MySQL username
-    password: "DBPASSWORD", // Your MySQL password
-    database: "DBNAME" // Database where BungeeServerManager stores server data
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
 });
 
 db.connect((err) => {
@@ -36,7 +40,7 @@ async function checkMOTD() {
             for (const srv of results) {
                 try {
                     // Timeout of 10 seconds
-                    const result = await util.status(srv.ip, srv.port, { timeout: 10000 });
+                    const result = await util.status(srv.ip, srv.port, { timeout: mcTimeout });
                     const motd = result.motd.clean?.trim().toLowerCase() || '';
 
                     let status = "✅ ONLINE";
@@ -91,7 +95,7 @@ async function checkMOTD() {
 setInterval(() => {
     console.log("Refreshing server statuses...");
     checkMOTD(); // Refresh the server statuses in the backend
-}, 15000);
+}, refreshInterval);
 
 // API route to get MOTD status
 app.get("/api/status", async (req, res) => {
@@ -111,4 +115,5 @@ app.use(express.static("public"));
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
+
 

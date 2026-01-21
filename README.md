@@ -27,8 +27,8 @@ It use the **BungeeServerManager** plugin to dynamically update the server avail
 1️⃣ **Clone the repository**:
 ```bash
 git clone https://github.com/Macaron27/motd-checker.git
-```
 cd motd-checker
+```
 
 2️⃣ **Install dependencies**:
 ```bash

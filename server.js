@@ -1,119 +1,55 @@
 const express = require("express");
-const util = require("minecraft-server-util");
-const mysql = require("mysql2");
+const config = require("./config");
+const { checkMOTD } = require("./services/motdChecker");
+const { initBot } = require("./services/discordBot");
 
-const app = express();
+console.log("[Server] Starting...");
 
-// Environment variables 
-const port = process.env.PORT;
-const refreshInterval = Number(process.env.REFRESH_INTERVAL);
-const mcTimeout = Number(process.env.MINECRAFT_TIMEOUT);
+// Initialize Discord bot
+console.log("[Server] Discord bot enabled:", config.notifications.enabled);
+initBot();
 
-// MySQL connection setup
-const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
-});
-
-db.connect((err) => {
-    if (err) {
-        console.error("Error connecting to MySQL:", err);
-        return;
-    }
-    console.log("Connected to MySQL!");
-});
-
-// Function to check MOTD status
-async function checkMOTD() {
-    return new Promise((resolve, reject) => {
-        db.query("SELECT systemname, ip, port, isactive FROM servermanager_servers", async (err, results) => {
-            if (err) {
-                console.error("Error fetching servers from DB:", err);
-                return reject(err);        // Reject promise if DB query fails
-            }
-
-            const serverStatus = [];
-            let completedRequests = 0;
-
-            for (const srv of results) {
-                try {
-                    // Timeout of 10 seconds
-                    const result = await util.status(srv.ip, srv.port, { timeout: mcTimeout });
-                    const motd = result.motd.clean?.trim().toLowerCase() || '';
-
-                    let status = "✅ ONLINE";
-                    if (motd.includes("offline")) {
-                        status = "🔴 OFFLINE";
-                    } else if (motd.includes("stopping")) {
-                        status = "🟡 STOPPING";
-                    } else if (motd.includes("preparing")) {
-                        status = "🟡 PREPARING";
-                    } else if (motd.includes("starting")) {
-                        status = "🟡 STARTING";
-                    }
-
-                    const isActive = status === "✅ ONLINE" ? 1 : 0;
-                    db.query("UPDATE servermanager_servers SET isactive = ? WHERE systemname = ?", [isActive, srv.systemname]);
-
-                    serverStatus.push({
-                        name: srv.systemname,
-                        status: status,
-                        motd: motd || "No MOTD set",
-                        players: {
-                            online: result.players?.online ?? 0,
-                            max: result.players?.max ?? 0
-                        }
-                    });
-                } catch (e) {
-                    console.error(`Error checking server ${srv.systemname}:`, e.message);
-                    serverStatus.push({
-                        name: srv.systemname,
-                        status: "❌ UNREACHABLE",
-                        motd: "N/A",
-                        players: {
-                            online: 0,
-                            max: 0
-                        }
-                    });
-
-                    db.query("UPDATE servermanager_servers SET isactive = 0 WHERE systemname = ?", [srv.systemname]);
-                }
-
-                completedRequests++;
-
-                if (completedRequests === results.length) {
-                    resolve(serverStatus);     // Resolve the promise once all servers are processed
-                }
-            }
-        });
-    });
-}
-
-// Automatic refresh every 15 seconds
-setInterval(() => {
-    console.log("Refreshing server statuses...");
-    checkMOTD(); // Refresh the server statuses in the backend
-}, refreshInterval);
-
-// API route to get MOTD status
-app.get("/api/status", async (req, res) => {
+// Start first check immediately
+(async () => {
+    console.log("[Checker] Running initial check...");
     try {
-        const status = await checkMOTD();
-        //console.log("API response:", status); // DEBUG: Log the status before sending it as a response
-        res.json(status);
+        await checkMOTD();
+        console.log("[Checker] Initial check completed");
     } catch (err) {
-        console.error("Error fetching status:", err);
-        res.status(500).json({ error: "Failed to check MOTD status" });
+        console.error("[Checker] Initial check failed:", err);
     }
-});
+})();
 
-// Serve static HTML (frontend)
-app.use(express.static("public"));
+// Background refresh every interval
+setInterval(async () => {
+    console.log("[Checker] Running scheduled check...");
+    try {
+        await checkMOTD();
+    } catch (err) {
+        console.error("[Checker] Scheduled check failed:", err);
+    }
+}, config.refresh.interval);
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-});
+// Only start web server if enabled
+if (config.server.enabled) {
+    console.log("[Server] Web server enabled");
+    const app = express();
 
+    app.get("/api/status", async (req, res) => {
+        try {
+            const status = await checkMOTD();
+            res.json(status);
+        } catch (err) {
+            console.error("[Server] Error fetching status:", err);
+            res.status(500).json({ error: "Failed to check MOTD status" });
+        }
+    });
 
+    app.use(express.static("public"));
+
+    app.listen(config.server.port, () => {
+        console.log(`[Server] Web server running at http://localhost:${config.server.port}`);
+    });
+} else {
+    console.log("[Server] Web server disabled");
+}

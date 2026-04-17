@@ -1,61 +1,97 @@
-🧩 **motd-checker**
+# motd-checker
 
-**motd-checker** is a lightweight Node.js tool that monitors the **Message of the Day (MOTD)** of your Minecraft servers registered through **BungeeCord**.
-It automatically checks for updates and can trigger notifications or database updates when the MOTD changes.
-It use the **BungeeServerManager** plugin to dynamically update the server availibility to **BungeeCord**.
+motd-checker is a lightweight Node.js application that monitors the Message of the Day (MOTD) of Minecraft servers registered through BungeeCord. It automatically checks for updates and can trigger notifications or database updates when the MOTD changes. It integrates with the BungeeServerManager plugin to dynamically update server availability in BungeeCord.
 
----
+## Features
 
-⚙️ **Features**
-- 🔍 Detects changes in the MOTD of Minecraft servers
-- 🔄 Integrates with BungeeServerManager to propagate updates
-- 🗄️ Uses an SQL database to store server availibility
-- ⚡ Configurable polling interval and target servers
-- 📣 Optional notification hooks throught a UI.
-- 💾 Keeps a snapshot of the previous MOTD for accurate comparisons
+- Detects changes in the MOTD of Minecraft servers
+- Integrates with BungeeServerManager to propagate updates
+- Uses an SQL database to store server availability
+- Configurable polling interval and target servers
+- Optional Discord notifications (enabled with `--discord` flag)
+- Web API for status checking
+- Keeps a snapshot of the previous MOTD for accurate comparisons
 
----
+## Why It's Useful
 
-🧠 **Why It’s Useful**
-- Detect MOTD to enable / disable your servers on your BungeeCord
-- Detect outage on your infrastructure and prevent access to disabled arena (thus prevent user confusion)
+- Detect MOTD changes to enable/disable servers on BungeeCord
+- Detect outages in infrastructure and prevent access to disabled servers, reducing user confusion
 
----
+## Requirements
 
-🚀 **Getting Started**
+- Node.js
+- MySQL database
+- BungeeCord with BungeeServerManager plugin
 
-1️⃣ **Clone the repository**:
-```bash
-git clone https://github.com/Macaron27/motd-checker.git
-cd motd-checker
-```
+## Installation
 
-2️⃣ **Install dependencies**:
-```bash
-npm install
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Macaron27/motd-checker.git
+   cd motd-checker
+   ```
 
-3️⃣ **Configure your environment**:
-Set up **BungeeServerManager** on your BungeeCord network
-Configure your **SQL database** connection in the config file
-Define target servers and the check interval
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-4️⃣ **Run the checker**:
+3. Set up your environment variables in a `.env` file:
+   ```env
+   # Database
+   DB_HOST=your_db_host
+   DB_USER=your_db_user
+   DB_PASSWORD=your_db_password
+   DB_NAME=your_db_name
+
+   # Optional: Web server
+   ENABLE_WEB=1
+   PORT=3000
+
+   # Optional: Refresh interval (ms)
+   REFRESH_INTERVAL=15000
+
+   # Optional: Minecraft timeout (ms)
+   MINECRAFT_TIMEOUT=10000
+
+   # Optional: Discord notifications
+   DISCORD_BOT_TOKEN=your_bot_token
+   DISCORD_GUILD_ID=your_guild_id
+   DISCORD_CHANNEL_ID=your_channel_id
+   ```
+
+## Usage
+
+Run the checker:
 ```bash
 node server.js
 ```
 
-5️⃣ **Verify functionality**:
-Watch the console or your notification channel for MOTD updates!
+To enable Discord notifications:
+```bash
+node server.js --discord
+```
 
----
+The application will start monitoring the servers and update the database accordingly. If Discord is enabled, it will send notifications on status changes.
 
-🧩 **Future Improvements**
-- Support for multiple notification channels (Slack, email, etc.)
+## API
+
+If the web server is enabled, you can access the following endpoints:
+
+- `GET /api/health` - Health check endpoint
+- `GET /api/servers` - Returns the current status of all monitored servers
+- `GET /api/servers/:name` - Returns the status of a specific server by name
+- `POST /api/check` - Manually triggers a status check and returns the results
+- `GET /api/status` - Legacy endpoint, same as `/api/servers`
+
+The web interface is available at `http://localhost:3000` (or configured port).
+
+## Future Improvements
+
+- Support for additional notification channels (Slack, email, etc.)
 - Docker container for easier deployment
-- REST API endpoint to fetch the current Status of all registered servers
+- Enhanced REST API endpoints
 
----
+## License
 
-📜 License
 This project is open source and available under the GNU GPLv3 License.

@@ -33,6 +33,7 @@ const config = {
 const express = require("express");
 const { checkMOTD } = require("./services/motdChecker")(config);
 const { initBot } = require("./services/discordBot")(config);
+const apiRoutes = require("./api")(checkMOTD);
 
 console.log("[Server] Starting...");
 
@@ -67,59 +68,7 @@ if (config.server.enabled) {
     const app = express();
 
     app.use(express.json());
-
-    // Health check
-    app.get("/api/health", (req, res) => {
-        res.json({ status: "ok", timestamp: new Date().toISOString() });
-    });
-
-    // Get all servers with status
-    app.get("/api/servers", async (req, res) => {
-        try {
-            const status = await checkMOTD();
-            res.json(status);
-        } catch (err) {
-            console.error("[Server] Error fetching servers:", err);
-            res.status(500).json({ error: "Failed to fetch servers" });
-        }
-    });
-
-    // Get specific server status
-    app.get("/api/servers/:name", async (req, res) => {
-        try {
-            const status = await checkMOTD();
-            const server = status.find(s => s.name === req.params.name);
-            if (!server) {
-                return res.status(404).json({ error: "Server not found" });
-            }
-            res.json(server);
-        } catch (err) {
-            console.error("[Server] Error fetching server:", err);
-            res.status(500).json({ error: "Failed to fetch server" });
-        }
-    });
-
-    // Manual check trigger
-    app.post("/api/check", async (req, res) => {
-        try {
-            const status = await checkMOTD();
-            res.json({ message: "Manual check completed", status, timestamp: new Date().toISOString() });
-        } catch (err) {
-            console.error("[Server] Error during manual check:", err);
-            res.status(500).json({ error: "Manual check failed" });
-        }
-    });
-
-    // Legacy endpoint
-    app.get("/api/status", async (req, res) => {
-        try {
-            const status = await checkMOTD();
-            res.json(status);
-        } catch (err) {
-            console.error("[Server] Error fetching status:", err);
-            res.status(500).json({ error: "Failed to check MOTD status" });
-        }
-    });
+    app.use("/api", apiRoutes);
 
     app.use(express.static("public"));
 

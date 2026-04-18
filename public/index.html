@@ -8,7 +8,7 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             background-color: #f4f4f4;
             transition: background-color 0.3s, color 0.3s;
         }
@@ -16,32 +16,163 @@
             background-color: #1e1e1e;
             color: #f0f0f0;
         }
+        header {
+            position: sticky;
+            top: 0;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            padding: 15px 20px;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background 0.3s;
+        }
+        body.dark header {
+            background: #2e2e2e;
+            border-bottom-color: #444;
+        }
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
         .controls {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            align-items: center;
         }
-        .search-input, .sort-select, .theme-toggle {
-            padding: 8px;
+        .search-input, .sort-select {
+            padding: 8px 12px;
             font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            color: #333;
+            transition: border-color 0.3s;
         }
-        .timestamp {
-            margin-top: 20px;
+        body.dark .search-input, body.dark .sort-select {
+            background: #3e3e3e;
+            color: #f0f0f0;
+            border-color: #555;
+        }
+        /* Theme toggle switch */
+        .theme-toggle {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            cursor: pointer;
+        }
+        .theme-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "☀️";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+            content: "🌙";
+        }
+        .stats {
             font-size: 0.9rem;
-            color: gray;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .online { color: #28a745; font-weight: bold; }
+        .starting { color: #ffc107; font-weight: bold; }
+        .unreachable { color: #dc3545; font-weight: bold; }
+        .stats {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        body.dark .stats {
+            color: #ccc;
         }
         .card {
             background: white;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: background 0.3s, color 0.3s;
+            transition: background 0.3s, color 0.3s, border-color 0.5s, transform 0.8s;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 3px solid transparent;
+        }
+        /* Status border colors */
+        .card.unreachable { border-color: #8b0000; animation: pulse-red 2s infinite; }
+        .card.offline { border-color: #dc3545; }
+        .card.starting { border-color: #ffc107; animation: spin-border 3s linear infinite; }
+        .card.online { border-color: #28a745; }
+        /* Dark mode adjustments */
+        body.dark .card.unreachable { border-color: #a00000; }
+        body.dark .card.offline { border-color: #c82333; }
+        body.dark .card.starting { border-color: #e0a800; }
+        body.dark .card.online { border-color: #218838; }
+        /* Pulse animation for unreachable servers */
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(139, 0, 0, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(139, 0, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(139, 0, 0, 0); }
+        }
+        /* Spin animation for starting servers */
+        @keyframes spin-border {
+            0% { border-color: #ffc107; }
+            25% { border-color: #ffeb3b; }
+            50% { border-color: #ffc107; }
+            75% { border-color: #ffeb3b; }
+            100% { border-color: #ffc107; }
+        }
+        /* Status change animation */
+        .card.changed {
+            animation: status-change 0.8s ease-in-out;
+        }
+        @keyframes status-change {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(0,0,0,0.3); }
+            100% { transform: scale(1); }
         }
         /* Grid layout: 3 cards per row, responsive */
         #serverContainer {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 15px;
+            padding: 20px;
             align-items: start;
         }
         @media (max-width: 900px) {
@@ -50,16 +181,16 @@
         @media (max-width: 600px) {
             #serverContainer { grid-template-columns: 1fr; }
         }
-    /* spacing is handled by grid gap */
         .card.dark {
             background: #2e2e2e;
-            border: 1px solid #444;
+            border: 3px solid #444;
         }
         .card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
+            margin-bottom: 10px;
         }
         .server-name {
             margin: 0;
@@ -68,7 +199,9 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            color: #333;
         }
+        body.dark .server-name { color: #f0f0f0; }
         .server-players {
             font-size: 0.95rem;
             color: #333;
@@ -79,39 +212,74 @@
         body.dark .server-players { color: #ddd; }
         .status {
             font-weight: bold;
-            margin-top: 8px;
+            margin: 8px 0;
+            color: #333;
         }
+        body.dark .status { color: #f0f0f0; }
+        .motd {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 0;
+            flex-grow: 1;
+        }
+        body.dark .motd { color: #ccc; }
     </style>
 </head>
 <body>
-    <div class="controls">
-        <input type="text" id="searchBar" placeholder="Search servers..." class="search-input" />
-        <select id="sortSelect" class="sort-select">
-            <option value="name">Sort by Name</option>
-            <option value="status">Sort by Status</option>
-        </select>
-        <button id="themeToggle" class="theme-toggle">Toggle Dark Mode</button>
-    </div>
+    <header>
+        <div class="header-content">
+            <div class="controls">
+                <input type="text" id="searchBar" placeholder="Search servers..." class="search-input" />
+                <select id="sortSelect" class="sort-select">
+                    <option value="name">Sort by Name</option>
+                    <option value="status">Sort by Status</option>
+                </select>
+                <label class="theme-toggle">
+                    <input type="checkbox" id="themeToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="stats" id="stats">
+                <span class="stat-item online">Online: 0</span>
+                <span class="stat-item starting">Starting: 0</span>
+                <span class="stat-item unreachable">Unreachable: 0 ⚠️</span>
+                <span>Last updated: Never</span>
+            </div>
+        </div>
+    </header>
 
     <div id="serverContainer"></div>
 
-    <div id="lastUpdated" class="timestamp"></div>
-
     <script>
         let servers = [];
+        let filteredServers = [];
+        let previousStatuses = {};
 
         async function fetchStatus() {
             try {
                 const res = await fetch('/api/status');
                 servers = await res.json();
+                updateStats();
                 updateUI(servers);
-                document.getElementById("lastUpdated").textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
             } catch (error) {
                 console.error("Failed to fetch server status", error);
             }
         }
 
+        function updateStats() {
+            const onlineCount = servers.filter(s => s.status.includes('ONLINE')).length;
+            const startingCount = servers.filter(s => s.status.includes('STARTING') || s.status.includes('PREPARING')).length;
+            const unreachableCount = servers.filter(s => s.status.includes('UNREACHABLE')).length;
+            const now = new Date().toLocaleTimeString();
+            
+            document.querySelector('.online').textContent = `Online: ${onlineCount}`;
+            document.querySelector('.starting').textContent = `Starting: ${startingCount}`;
+            document.querySelector('.unreachable').textContent = `Unreachable: ${unreachableCount} ⚠️`;
+            document.querySelector('#stats span:last-child').textContent = `Last updated: ${now}`;
+        }
+
         function updateUI(serverList) {
+            filteredServers = serverList;
             const container = document.getElementById("serverContainer");
             container.innerHTML = '';
             serverList.forEach(server => {
@@ -120,8 +288,29 @@
                 if (document.body.classList.contains("dark")) {
                     card.classList.add("dark");
                 }
-                // Determine player text: numeric when ONLINE, "Waiting..." when STARTING/PREPARING
+                
+                // Check if status changed
+                const prevStatus = previousStatuses[server.name];
+                if (prevStatus && prevStatus !== server.status) {
+                    card.classList.add('changed');
+                    // Remove the class after animation
+                    setTimeout(() => card.classList.remove('changed'), 800);
+                }
+                previousStatuses[server.name] = server.status;
+                
+                // Add status-based border class
                 const statusStr = (server.status || '').toString().toUpperCase();
+                if (statusStr.includes('UNREACHABLE')) {
+                    card.classList.add('unreachable');
+                } else if (statusStr.includes('OFFLINE')) {
+                    card.classList.add('offline');
+                } else if (statusStr.includes('STARTING') || statusStr.includes('PREPARING') || statusStr.includes('STOPPING')) {
+                    card.classList.add('starting');
+                } else if (statusStr.includes('ONLINE')) {
+                    card.classList.add('online');
+                }
+                
+                // Determine player text: numeric when ONLINE, "Waiting..." when STARTING/PREPARING
                 let playersText = '';
                 if (statusStr.includes('ONLINE')) {
                     playersText = `${server.players?.online ?? 0}/${server.players?.max ?? 0}`;
@@ -135,7 +324,7 @@
                         ${playersText ? `<div class="server-players">${playersText}</div>` : ''}
                     </div>
                     <p class="status">Status: ${server.status}</p>
-                    <p>MOTD: ${server.motd}</p>
+                    <p class="motd">MOTD: ${server.motd}</p>
                 `;
                 container.appendChild(card);
             });
@@ -152,17 +341,22 @@
 
         document.getElementById("sortSelect").addEventListener("change", () => {
             const sortBy = document.getElementById("sortSelect").value;
-            const sorted = [...servers].sort((a, b) => {
+            const sorted = [...filteredServers].sort((a, b) => {
                 if (sortBy === "name") return a.name.localeCompare(b.name);
                 if (sortBy === "status") return a.status.localeCompare(b.status);
             });
             updateUI(sorted);
         });
 
-        document.getElementById("themeToggle").addEventListener("click", () => {
+        document.getElementById("themeToggle").addEventListener("change", () => {
             document.body.classList.toggle("dark");
             document.querySelectorAll(".card").forEach(card => card.classList.toggle("dark"));
         });
+
+        // Initialize theme toggle state
+        if (document.body.classList.contains("dark")) {
+            document.getElementById("themeToggle").checked = true;
+        }
 
         // Refresh every 15 seconds
         setInterval(fetchStatus, 15000);

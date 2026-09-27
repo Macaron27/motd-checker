@@ -83,6 +83,9 @@ jobs:
 
       - uses: docker/metadata-action@v6
         id: meta
+        env:
+          # GHCR reads a multi-arch package description from the index
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
           images: ${{ env.IMAGE }}
           tags: |

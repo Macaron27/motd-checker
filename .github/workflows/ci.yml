@@ -89,6 +89,13 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha
             type=ref,event=pr
+          # Repo API reports "GPL-3.0" and no description; set them explicitly
+          labels: |
+            org.opencontainers.image.licenses=GPL-3.0-or-later
+            org.opencontainers.image.description=Monitors Minecraft server MOTDs and syncs server availability with BungeeServerManager.
+          annotations: |
+            org.opencontainers.image.licenses=GPL-3.0-or-later
+            org.opencontainers.image.description=Monitors Minecraft server MOTDs and syncs server availability with BungeeServerManager.
 
       - uses: docker/login-action@v4
         if: github.ref == 'refs/heads/main'

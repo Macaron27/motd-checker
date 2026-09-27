@@ -26,20 +26,23 @@ const config = {
         enabled: process.env.DISCORD_BOT_ENABLED ? parseInt(process.env.DISCORD_BOT_ENABLED) === 1 : false,
         botToken: process.env.DISCORD_BOT_TOKEN || "",
         guildId: process.env.DISCORD_GUILD_ID || "",
-        channelId: process.env.DISCORD_CHANNEL_ID || ""
+        channelId: process.env.DISCORD_CHANNEL_ID || "",
+        slackWebhookUrl: process.env.SLACK_WEBHOOK_URL || "",
+        webhookUrl: process.env.WEBHOOK_URL || ""
     }
 };
 
 const express = require("express");
-const { checkMOTD } = require("./services/motdChecker")(config);
-const { initBot } = require("./services/discordBot")(config);
-const apiRoutes = require("./api")(checkMOTD);
+const notifications = require("./services/notifications")(config);
+const checker = require("./services/motdChecker")(config, notifications.notifyStatusChange);
+const { checkMOTD } = checker;
+const apiRoutes = require("./api")(checker);
 
 console.log("[Server] Starting...");
 
 // Initialize Discord bot
 console.log("[Server] Discord bot enabled:", config.notifications.enabled);
-initBot();
+notifications.init();
 
 // Start first check immediately
 (async () => {

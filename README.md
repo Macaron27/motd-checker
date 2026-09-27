@@ -24,7 +24,8 @@ motd-checker is a lightweight Node.js application that monitors the Message of t
 - Uses an SQL database to store server availability
 - Configurable polling interval and target servers
 - Optional Discord notifications (enabled with `--discord` flag)
-- Web API for status checking
+- Optional Slack and generic webhook notifications (enabled by setting their URL)
+- Web API for status checking, with per-status summary and single-server checks
 - Keeps a snapshot of the previous MOTD for accurate comparisons
 - Multi-arch Docker image (`linux/amd64`, `linux/arm64`)
 
@@ -78,6 +79,10 @@ motd-checker is a lightweight Node.js application that monitors the Message of t
    DISCORD_BOT_TOKEN=your_bot_token
    DISCORD_GUILD_ID=your_guild_id
    DISCORD_CHANNEL_ID=your_channel_id
+
+   # Optional: Slack incoming webhook / generic JSON webhook
+   SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+   WEBHOOK_URL=https://example.com/motd-hook
    ```
 
 ## Usage
@@ -92,7 +97,23 @@ To enable Discord notifications:
 node server.js --discord
 ```
 
-The application will start monitoring the servers and update the database accordingly. If Discord is enabled, it will send notifications on status changes.
+The application will start monitoring the servers and update the database accordingly. On each status change it notifies every enabled channel; the first check after startup only records the current state.
+
+### Notification channels
+
+| Channel | Enable with | Message |
+|---------|-------------|---------|
+| Discord | `--discord` flag + `DISCORD_*` variables | `**lobby** status changed: ✅ ONLINE → 🔴 OFFLINE` |
+| Slack | `SLACK_WEBHOOK_URL` ([incoming webhook](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks)) | `*lobby* status changed: ✅ ONLINE → 🔴 OFFLINE` |
+| Webhook | `WEBHOOK_URL` | JSON `POST`, see below |
+
+The generic webhook receives:
+
+```json
+{ "server": "lobby", "previous": "✅ ONLINE", "current": "🔴 OFFLINE", "timestamp": "2026-01-01T12:00:00.000Z" }
+```
+
+Channels are independent: one that fails or times out (5 s) is logged and doesn't block the others. Webhook URLs are secrets (a Slack URL is enough to post to your channel), so they are never logged; an invalid URL disables its channel with a warning.
 
 ## Docker
 
@@ -125,8 +146,12 @@ If the web server is enabled, you can access the following endpoints:
 - `GET /api/health` - Health check endpoint
 - `GET /api/servers` - Returns the current status of all monitored servers
 - `GET /api/servers/:name` - Returns the status of a specific server by name
-- `POST /api/check` - Manually triggers a status check and returns the results
+- `GET /api/summary` - Server counts per status, e.g. `{ "total": 3, "counts": { "online": 2, "unreachable": 1 }, "checkedAt": "..." }` (a status with no server is absent from `counts`)
+- `POST /api/check` - Manually triggers a status check of all servers and returns the results
+- `POST /api/servers/:name/check` - Checks a single server now (updates the database and notifies like a scheduled check), `404` if unknown
 - `GET /api/status` - Legacy endpoint, same as `/api/servers`
+
+`GET` endpoints return the results of the last check instead of pinging every server on each request; each server includes a `checkedAt` timestamp. Checks started while one is running (scheduled or `POST /api/check`) share it.
 
 The web interface is available at `http://localhost:3000` (or configured port).
 
@@ -140,8 +165,7 @@ Tests use the built-in `node:test` runner and need no database or Minecraft serv
 
 ## Future Improvements
 
-- Support for additional notification channels (Slack, email, etc.)
-- Enhanced REST API endpoints
+- Email notifications
 
 ## License
 

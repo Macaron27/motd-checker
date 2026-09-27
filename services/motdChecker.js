@@ -2,9 +2,8 @@
 const mysql = require("mysql2/promise");
 const util = require("minecraft-server-util");
 
-module.exports = (config) => {
-    const { notifyStatusChange } = require("./discordBot")(config);
-
+// notifyStatusChange comes from the caller so the whole app shares one notifier
+module.exports = (config, notifyStatusChange = async () => {}) => {
     // Database pool
     const db = mysql.createPool({
         host: config.database.host,
@@ -51,38 +50,73 @@ module.exports = (config) => {
         }
     }
 
-    async function checkMOTD() {
+    // Probe one DB row, sync isactive and notify on change
+    async function checkServer(srv) {
+        const info = await getServerStatus(srv.ip, srv.port);
+        const isActive = info.status === "✅ ONLINE" ? 1 : 0;
+
+        // Update DB
+        await db.query(
+            "UPDATE servermanager_servers SET isactive = ? WHERE systemname = ?",
+            [isActive, srv.systemname]
+        );
+
+        // Check for status change
+        // First sighting after startup is not a change
+        const prevStatus = lastStatuses.get(srv.systemname);
+        lastStatuses.set(srv.systemname, info.status);
+        if (prevStatus && prevStatus !== info.status) {
+            await notifyStatusChange(srv.systemname, prevStatus, info.status);
+        }
+
+        return {
+            name: srv.systemname,
+            ...info,
+            checkedAt: new Date().toISOString()
+        };
+    }
+
+    // Results of the last full check, served by the read endpoints
+    let latest = null;
+    let running = null;
+
+    async function runCheck() {
         const [servers] = await db.query(
             "SELECT systemname, ip, port FROM servermanager_servers"
         );
 
         const statuses = [];
-
         for (const srv of servers) {
-            const info = await getServerStatus(srv.ip, srv.port);
-            const isActive = info.status === "✅ ONLINE" ? 1 : 0;
-
-            // Update DB
-            await db.query(
-                "UPDATE servermanager_servers SET isactive = ? WHERE systemname = ?",
-                [isActive, srv.systemname]
-            );
-
-            // Check for status change
-            const prevStatus = lastStatuses.get(srv.systemname) || "N/A";
-            if (prevStatus !== info.status) {
-                lastStatuses.set(srv.systemname, info.status);
-                await notifyStatusChange(srv.systemname, prevStatus, info.status);
-            }
-
-            statuses.push({
-                name: srv.systemname,
-                ...info
-            });
+            statuses.push(await checkServer(srv));
         }
 
+        latest = statuses;
         return statuses;
     }
 
-    return { checkMOTD, getServerStatus };
+    // Concurrent callers (interval, API) share the check already in progress
+    function checkMOTD() {
+        return running ??= runCheck().finally(() => { running = null; });
+    }
+
+    // Last results without probing again; runs a check if none has completed yet
+    async function getStatuses() {
+        return latest ?? checkMOTD();
+    }
+
+    // Probe a single server now; null if it isn't in the DB
+    // ponytail: doesn't wait for a running full check, which may briefly overwrite this result with its own
+    async function checkServerByName(name) {
+        const [[srv]] = await db.query(
+            "SELECT systemname, ip, port FROM servermanager_servers WHERE systemname = ?",
+            [name]
+        );
+        if (!srv) return null;
+
+        const result = await checkServer(srv);
+        if (latest) latest = latest.map(s => s.name === result.name ? result : s);
+        return result;
+    }
+
+    return { checkMOTD, getStatuses, checkServerByName, getServerStatus };
 };

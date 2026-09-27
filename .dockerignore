@@ -1,0 +1,8 @@
+# Allowlist: only runtime files reach the image (never .env, .git, node_modules)
+*
+!package.json
+!package-lock.json
+!server.js
+!api.js
+!services/
+!public/

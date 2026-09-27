@@ -62,6 +62,15 @@ setInterval(async () => {
     }
 }, config.refresh.interval);
 
+// Exit on stop signals (Node running as PID 1 in Docker ignores SIGTERM otherwise)
+// ponytail: immediate exit, close the DB pool / HTTP server first if in-flight requests start to matter
+for (const signal of ["SIGINT", "SIGTERM"]) {
+    process.on(signal, () => {
+        console.log(`[Server] ${signal} received, shutting down`);
+        process.exit(0);
+    });
+}
+
 // Only start web server if enabled
 if (config.server.enabled) {
     console.log("[Server] Web server enabled");

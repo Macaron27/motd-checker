@@ -1,14 +1,27 @@
 {
   "name": "motd-checker",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "test": "node --test"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": [
+    "minecraft",
+    "motd",
+    "bungeecord",
+    "discord"
+  ],
+  "author": "Macaron27",
+  "license": "GPL-3.0-or-later",
+  "description": "Monitors Minecraft server MOTDs and syncs server availability with BungeeServerManager.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Macaron27/motd-checker.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "discord.js": "^14.27.0",
     "dotenv": "^17.2.3",
